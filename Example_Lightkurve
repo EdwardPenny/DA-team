@@ -16,7 +16,7 @@ Lightcurves.plot()
 
 Lightcurve_Trimmed = Lightcurves.remove_nans().flatten(201).remove_outliers(4)
 #.remove_nans() --> removes not a number values  
-#.flatten() -->  number in bracket is the number of timestamps it will attempt to flatten to
+#.flatten() -->  number in bracket is the number of timestamps it will attempt to flatten to, must be odd
 #.remove_outliers --> removes outliers up to X sigma - ie will remove the large dropouts
 Lightcurve_Trimmed.plot()
 
