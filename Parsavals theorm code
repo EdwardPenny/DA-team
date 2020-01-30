@@ -1,12 +1,59 @@
-
 import numpy as np
+import lightkurve as lk
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import *
 
-#put your code down here 
-#       |
-#       |
-#       |
-#       |
-#   \   |   /
-#    \  |  /
-#     \ | /
-#      \|/
+def sigma2(a):
+    '''Calculates the sigma squared of an array'''
+    N=len(a)
+    a=np.square(a)
+    a=np.nansum(a) #nansum sums the array but skips values which are nan
+    return a/N
+    
+    def power(a,T):
+    ''' calculates the power in the frequency domain'''
+    N=len(a)
+    return 2*sigma2(a)*T/N
+    
+    search = lk.search_lightcurvefile('KIC3427720', cadence = 'short', mission = 'kepler') 
+
+#print(search) # displays the result of the search
+
+# DOWNLOAD ALL DATA - since will treat as one long lightcurve
+Lightcurves = search.download_all()
+Lightcurves = Lightcurves.PDCSAP_FLUX #pre-reduced data BUT is not always good... SAP = Simple Aperture Photometry
+Lightcurves = Lightcurves.stitch() #stitches all the lightcurves together to create one long lightcurve
+Pbefore= sigma2(Lightcurves.flux) #calcualtes the mean square power in the time domain
+print(f'mean square power in time domain {Pbefore}')
+#Lightcurves.plot()
+
+Lightcurve_Trimmed = Lightcurves.remove_nans().flatten(201).remove_outliers(4)
+#.remove_nans() --> removes not a number values  
+#.flatten() -->  number in bracket is the number of timestamps it will attempt to flatten to, must be odd
+#.remove_outliers --> removes outliers up to X sigma - ie will remove the large dropouts
+#Lightcurve_Trimmed.plot()
+
+# MAKING THE POWER SPECTRUM (aka a periodogram)
+pg = Lightcurve_Trimmed.to_periodogram(normalization = 'psd')
+total_time = Lightcurves.time[-1]-Lightcurves.time[0]
+f,p = pg.frequency.value, pg.power.value
+Pafter = power(p,total_time) # calculates the power in the frequency domain
+
+print(f'power in frequency domain {Pafter}')
+
+# PLOTTING SERIES
+#figure(figsize = (15,10))
+#plot(f, p)
+#xlim()
+#ylim()
+#plt.show()
+
+Adjustment_factor=((Pbefore*len(p))/(2*total_time*sigma2(p)))**0.5 #factor to multiple the frequency values in frequency domain by
+
+Ap=Adjustment_factor*p #changing the power vaules in the frequency domain my the adjustment factor
+AdjustedP=power(Ap,total_time)
+print(f'the new power in the frequency domain is {AdjustedP}')
+factor_off=Pbefore/AdjustedP
+print(f'factor off {factor_off}')
+plot(f,Ap)
+plt.show()
