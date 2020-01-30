@@ -1,12 +1,67 @@
-
 import numpy as np
+import lightkurve as lk
+from matplotlib.pyplot import *
 
-#put your code down here 
-#       |
-#       |
-#       |
-#       |
-#   \   |   /
-#    \  |  /
-#     \ | /
-#      \|/
+search = lk.search_lightcurvefile('KIC5184732', cadence = 'short', mission = 'kepler') 
+#--> nb mission can also be tess
+
+# TO DISPLAY THE RESULT OF THE SEARCH;
+search
+print('search complete')
+# DOWNLOAD ALL DATA - since will treat as one long lightcurve
+Lightcurves = search.download_all()
+print('downloaded')
+Lightcurves = Lightcurves.PDCSAP_FLUX #pre-reduced data BUT is not always good... SAP = Simple Aperture Photometry
+Lightcurves = Lightcurves.stitch() #stitches all the lightcurves together to create one long lightcurve
+print('stitched')
+Lightcurves.plot()
+
+Lightcurve_Trimmed = Lightcurves.remove_nans().flatten(201).remove_outliers(4)
+#.remove_nans() --> removes not a number values  
+#.flatten() -->  number in bracket is the number of timestamps it will attempt to flatten to, must be odd
+#.remove_outliers --> removes outliers up to X sigma - ie will remove the large dropouts
+print('trimmed')
+Lightcurve_Trimmed.plot()
+
+# MAKING THE POWER SPECTRUM (aka a periodogram)
+pg = Lightcurve_Trimmed.to_periodogram(normalization = 'psd')
+
+f,p = pg.frequency.value, pg.power.value
+print('periodogram made')
+# PLOTTING SERIES
+figure(figsize = (15,10))
+plot(f, p)
+xlim()
+ylim()
+
+
+
+def meansquarepower(power):
+    sq = np.nansum(np.square(power))
+    n = np.shape(power)
+    return sq / n
+
+
+
+#begin avg power freq domain
+mspf = meansquarepower(p)
+deltat = Lightcurves.time[1] - Lightcurves.time[0]
+avgfreqpower = 2*(mspf)*deltat
+
+
+#begin msp in time domain
+mspt = meansquarepower(Lightcurves.flux)
+#mspt = meansquarepower(timeflux)
+
+
+ratio = mspt / avgfreqpower
+ratio = ratio/(2*deltat)
+
+print (p)
+print (dir(Lightcurves))
+print(Lightcurves.time_scale)
+print(Lightcurves.time_format)
+print(deltat)
+print(mspf)
+print(avgfreqpower)
+print(mspt)
