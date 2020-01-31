@@ -1,3 +1,30 @@
+When copying this code dont take the top bit if you are using spyder 
+
+When converting from a time domain to a time domain to a frequency domain it is vital that energy has to be conserved. Parsavals theorem states that the mean square power of in the time domain and the power in the frequency domain should be equal. lightcurve does not conserve Parsavals theorem. To make the energy equal in both cases we will adjust the power values in the frequency domain by a set factor which will be calculated below.
+
+First we will need to calculate both the mean square power in the time domain and the power in the frequency domain to check if they are equal
+
+$$mean\,square\,power\,time\,domain\,=\frac{1}{N}\sum_i^Ny_i^2 (1)$$
+
+$$power\,frequency\,domain\,=\frac{2\sigma^2T}{N} (2)$$
+
+$$\sigma^2=\frac{1}{N}\sum_i^Ny_i^2 (3)$$
+
+y in equation 1 refers to the normalised flux in the time domain and y in equation 2 refers to the power in the frerquency domain.
+Lightcurve does not obey Parsavals theorem. We need to calculate the factor by which we will scale the power values in the frequency domain. A is the adjustment factor.
+
+$$mean\,square\,power\,time\,domain\,=P_t$$
+
+$P_t$ should be equal to the power in the frequency domain. We will set $P_t$ equal to equation 2
+
+$$P_t=\frac{2\sigma^2T}{N}\,\,\,\,where\,\,\sigma^2=\frac{1}{N}\sum_i^N(Ay_i)^2$$
+
+$$\frac{NP_t}{2T}=sigma^2=\frac{1}{N}\sum_i^N(Ay_i)^2=\frac{A^2}{N}\sum_i^N(y_i)^2$$
+
+$$A=\sqrt{\frac{P_tN^2}{2T\sum_i^Ny_i^2}}$$
+
+$$A=\sqrt{\frac{P_tN}{2T\sigma^2}}$$
+
 import numpy as np
 import lightkurve as lk
 import matplotlib.pyplot as plt
