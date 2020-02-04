@@ -1,0 +1,77 @@
+"""
+Created on Tue Feb  4 15:36:07 2020
+
+@author: danjh
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def largefreqspacing(angulardegree, radialorder, frequency):
+    lfs = []
+    freq = []
+    for n in np.arange(np.shape(frequency)[0]):
+        print(n)
+        if angulardegree[n] == angulardegree[n-1]:
+            print('yes')
+            print(frequency[n]-frequency[n-1])
+            lfs.append(frequency[n]-frequency[n-1])
+            freq.append(frequency[n])
+    return (lfs, freq)
+
+datafile1 = 'C:\\Users\\danjh\\Desktop\\ObsLab2019\\group_studies\\worksheet\\freqdata\\m1.00Y0.278Z0.02a1.90.log3.freq'
+datafile2 = 'C:\\Users\\danjh\\Desktop\\ObsLab2019\\group_studies\\worksheet\\freqdata\\m1.00Y0.278Z0.02a1.90.log5.freq'
+datafile3 = 'C:\\Users\\danjh\\Desktop\\ObsLab2019\\group_studies\\worksheet\\freqdata\\m1.00Y0.278Z0.02a1.90.log7.freq'
+datafile4 = 'C:\\Users\\danjh\\Desktop\\ObsLab2019\\group_studies\\worksheet\\freqdata\\m1.00Y0.278Z0.02a1.90.log9.freq'
+datafile5 = 'C:\\Users\\danjh\\Desktop\\ObsLab2019\\group_studies\\worksheet\\freqdata\\m1.00Y0.278Z0.02a1.90.log11.freq'
+
+#file1
+bigdata = np.loadtxt(datafile1, skiprows=3)
+
+angulardegree = bigdata[:,0]
+radialorder = bigdata[:,1]
+frequency = bigdata[:,2]
+
+lfs1, lfsfreq1 = largefreqspacing(angulardegree, radialorder, frequency)
+#file2
+bigdata = np.loadtxt(datafile2, skiprows=3)
+
+angulardegree = bigdata[:,0]
+radialorder = bigdata[:,1]
+frequency = bigdata[:,2]
+
+lfs2, lfsfreq2 = largefreqspacing(angulardegree, radialorder, frequency)
+#file3
+bigdata = np.loadtxt(datafile3, skiprows=3)
+
+angulardegree = bigdata[:,0]
+radialorder = bigdata[:,1]
+frequency = bigdata[:,2]
+
+lfs3, lfsfreq3 = largefreqspacing(angulardegree, radialorder, frequency)
+#file4
+bigdata = np.loadtxt(datafile4, skiprows=3)
+
+angulardegree = bigdata[:,0]
+radialorder = bigdata[:,1]
+frequency = bigdata[:,2]
+
+lfs4, lfsfreq4 = largefreqspacing(angulardegree, radialorder, frequency)
+#file5
+bigdata = np.loadtxt(datafile5, skiprows=3)
+
+angulardegree = bigdata[:,0]
+radialorder = bigdata[:,1]
+frequency = bigdata[:,2]
+
+lfs5, lfsfreq5 = largefreqspacing(angulardegree, radialorder, frequency)
+
+
+fig = plt.figure(figsize=(20,10))
+ax = fig.add_subplot(1,1,1)
+ax.plot(lfsfreq1, lfs1, linestyle="None", marker='x')
+#ax.plot(lfsfreq2, lfs2, linestyle="None", marker='x')
+#ax.plot(lfsfreq3, lfs3, linestyle="None", marker='x')
+#ax.plot(lfsfreq4, lfs4, linestyle="None", marker='x')
+#ax.plot(lfsfreq5, lfs5, linestyle="None", marker='x')
+
