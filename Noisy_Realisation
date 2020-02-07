@@ -1,0 +1,20 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+pure = np.linspace(1, 1000, 100)
+vary_1 = np.random.uniform(0, 1, pure.shape)
+signal_1 = -(pure* np.log(vary_1))+pure
+print(vary_1)
+
+vary_2 = np.random.uniform(0, 0, pure.shape)
+signal_2 = pure + vary_2
+
+#print(np.max(vary_1))
+
+#print(signal)
+
+plt.yscale('log')
+#ax.set_yscale('log')
+plt.plot(pure, signal_1, 'r')
+plt.plot(pure, signal_2, 'm.')
+plt.show()
