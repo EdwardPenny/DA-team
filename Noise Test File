@@ -11,6 +11,7 @@ def addnoise(pure):
     signal = -(pure* np.log(vary))
     return (signal)
 
+'''testing with a mod sin function'''
 
 xsignal = np.arange(4*np.pi, step=0.001)
 sinsignal = np.abs(np.sin(xsignal))
@@ -23,16 +24,33 @@ ax = fig.add_subplot(1,1,1)
 ax.plot(xsignal, sinsignal, 'r')
 ax.plot(xsignal, sinsignaln, 'b')
 
+'''testing the exponential noise function'''
 
-
-Vmag = np.linspace(15,30,1000)
+Vmag = np.linspace(0,8,1000)
 bgshot = 18*(10**(-0.4*(11-Vmag)))
-sig50 = np.sqrt((bgshot)/100)
+print(bgshot)
+sig50 = np.sqrt(bgshot*(1000000/100))
 sig50n = addnoise(sig50)
+bgshotn = addnoise(bgshot)
 
 fig = plt.figure(figsize=(20,10))
 ax = fig.add_subplot(1,1,1)
 ax.set_xlabel('Vmag')
 ax.set_ylabel('sig50')
-ax.plot(Vmag, sig50)
-ax.plot(Vmag, sig50n)
+#ax.plot(Vmag, sig50)
+#ax.plot(Vmag, sig50n)
+ax.plot(Vmag, bgshot)
+ax.plot(Vmag, bgshotn)
+
+
+'''testing x^3 graph'''
+
+x = np.arange(-13,13, step=0.01)
+y = x**3
+yn = addnoise(y)
+
+fig = plt.figure(figsize=(20,10))
+ax = fig.add_subplot(1,1,1)
+#plt.yscale('log')
+ax.plot(-x, yn, 'r')
+ax.plot(-x, y, 'b')
