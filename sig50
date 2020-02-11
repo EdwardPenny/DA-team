@@ -1,0 +1,6 @@
+Vmag = np.linspace(15,30,1000)
+bgshot = 18*(10**(-0.4*(11-Vmag)))
+sig50 = np.sqrt((bgshot)/100)
+plt.xlabel('Vmag')
+plt.ylabel('sig50')
+plt.plot(Vmag, sig50)
