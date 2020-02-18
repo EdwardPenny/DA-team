@@ -1,0 +1,290 @@
+"""
+Created on Tue Feb 18 14:14:33 2020
+
+@author: danjh
+"""
+
+import numpy as np
+
+import matplotlib.pyplot as plt
+
+import astropy.constants as c
+
+import math
+
+from scipy.optimize import curve_fit
+
+#define parameters
+
+delta_v_sun = 134.8 #microHz
+
+D = 1.5
+
+n = []
+
+for i in range(40):
+
+    n.append(i+1)
+
+l= 0
+
+l1 = 1
+
+l2 = 2
+
+l3 = 3
+
+width = 10
+
+frequency = []
+
+for j in range(6000):
+
+    frequency.append(j+1)
+
+x = np.array(frequency)
+
+H=5
+
+epsilon=1.5
+
+V_max_sun = 3100 #microHz
+
+A_max_sun = 2.1 #ppm from Warrick's paper
+
+#calculate modes for different angular degree, l and radial mode, n
+
+modes=[]
+
+for i in range(len(n)):
+
+    modes.append(delta_v_sun*(n[i]+((l)/2)+epsilon)-D*(l)*((l)+1))
+    
+modes1=[]
+
+for i in range(len(n)):
+
+    modes1.append(delta_v_sun*(n[i]+((l1)/2)+epsilon)-D*(l1)*((l1)+1))
+    
+modes2=[]
+
+for i in range(len(n)):
+
+    modes2.append(delta_v_sun*(n[i]+((l2)/2)+epsilon)-D*(l2)*((l2)+1))
+    
+
+modes3=[]
+
+for i in range(len(n)):
+
+    modes3.append(delta_v_sun*(n[i]+((l3)/2)+epsilon)-D*(l3)*((l3)+1))
+    
+
+#Defines Gaussian curve with height A squared
+
+sigma = 2.123*delta_v_sun#microHz
+
+Gauss = (A_max_sun**2)*(np.exp(-0.5*((x-V_max_sun)/sigma)**2))
+
+#Defines parameters for granulation
+
+tau_sun = 200 #seconds
+
+g_sun = 274 #metres per second squared
+
+T_eff_sun = 5777 #Kelvin
+
+sigma_sun = 50000/(c.R_sun.value/(1000*10**3)) #ppm
+
+granulation = (4*np.sqrt(2)*tau_sun/1e6*(sigma_sun)**2)/(1+(2*np.pi*x*tau_sun/1e6)**4) #ppm squared per micro hertz
+
+#Defines width of the Lorentzians
+
+alpha = -25.5+29.1 #for the Sun
+
+gamma_alpha = 6.3 - 1.8 #for the Sun
+
+linewidth = (alpha*np.log(x/V_max_sun)+np.log(gamma_alpha))
+
+#Using the Gaussian as the height in the function to plot the Lorentzians
+
+def lorentz_gauss(modes, Gauss, width):
+
+    Lorentzh = np.zeros(len(x))
+
+    for p in range(len(modes)):
+
+        Lorentzh+=(Gauss*((1+((x - np.array(modes)[p])/(width/2))**2)**(-1)))
+
+    Lorentzh_array = np.array(Lorentzh)
+
+    return Lorentzh_array
+
+#Heights of modes scaled to their relative visibilities 
+
+Lorentzh_array_0 = lorentz_gauss(modes, Gauss, linewidth)
+
+Lorentzh_array_1 = lorentz_gauss(modes1, Gauss*1.5, linewidth)
+
+Lorentzh_array_2 = lorentz_gauss(modes2, Gauss*0.5, linewidth)
+
+Lorentzh_array_3 = lorentz_gauss(modes3, Gauss*0.04, linewidth)
+
+''''''
+
+#Plots the Lorentzians with the granulation as a full spectrum
+
+plt.figure(figsize=(15,10))
+
+plt.plot(x, Lorentzh_array_0+granulation, 'c')
+
+plt.plot(x, Lorentzh_array_1+granulation)
+
+plt.plot(x, Lorentzh_array_2+granulation)
+
+plt.plot(x, Lorentzh_array_3+granulation)
+
+plt.title('Frequency-Power spectrum for the Sun with Granulation and Random Noise')
+
+plt.xlabel('Frequency ($\mu$Hz)')
+
+plt.ylabel('$Ppm^2$/$\mu$Hz')
+
+#Adds random noise
+
+def addnoise(pure):
+
+    vary = np.random.uniform(0, 1, pure.shape)
+
+    signal = -(pure* np.log(vary))
+
+    return (signal)
+
+#SHOT NOISE NONSENSE
+vmag = np.full((6000), 6) #here 8 defines the apparent magnitude
+shot_noise = 18*10**(-0.4*(11.0-vmag))
+
+
+y1 = Lorentzh_array_0
+y2 = Lorentzh_array_1
+y3 = Lorentzh_array_2
+y4 = Lorentzh_array_3
+ysums = y1+y2+y3+y4+granulation+shot_noise
+ysum = y1+y2+y3+y4+granulation
+ysumn = addnoise(ysum)
+ysumns = addnoise(ysums)
+
+print(np.shape(y1))
+print(np.shape(y2))
+print(np.shape(y3))
+print(np.shape(y4))
+
+plt.plot(x, y1,'r')
+
+plt.plot(x, y2, 'g')
+
+plt.plot(x, y3, 'm')
+
+plt.plot(x, y4, 'c')
+
+plt.plot(x, ysumn, 'b')
+
+
+
+#BIN PACKING TESTS
+
+def peak(x,height,centre,width):
+    '''plots a gaussian'''
+    return height*np.exp((-(x-centre)**2)/(2*width**2))
+
+def bin_it(yvalues,binsize):
+    '''groups an array in groups of a given size then averaging them'''
+    N=int(math.ceil(len(yvalues)/binsize))
+    #finds number of times code should loop, taking into acount the final group may be smaller than binsize
+    C=0
+    newy=[] #list for new y array
+    while C<N:
+        if (C+1)*binsize<len(yvalues): #if the end of the bin is still inside the orignal array
+            Q=(np.sum(yvalues[C*binsize:(C+1)*binsize]))/binsize #group of binsize averaged
+        else:
+            Q=(np.sum(yvalues[C*binsize:len(yvalues)]))/binsize
+            #if end of bin would be oustide the array use end of the array as the end of the bin
+        newy.append(Q)
+        C+=1
+    return np.array(newy)
+
+binsize = 20
+ybin = bin_it(ysumn, binsize)
+ybins = bin_it(ysumns, binsize)
+xbin = x[0::binsize]
+print(np.shape(xbin))
+
+#gaussian fit on binned data
+init_guess = [35, 0, 1000]
+best_valsfull, covar = curve_fit(peak, x[0::binsize], bin_it(ysumn,binsize), p0=init_guess)
+
+
+fig = plt.figure(figsize=(20,10))
+ax = fig.add_subplot(1,1,1)
+ax.plot(xbin, ybin, label='Binned Sun Spectrum with no Shot Noise' )
+ax.plot(xbin, ybins, label='Binned Sun Spectrum with Shot noise at app. mag = 8' )
+ax.plot(x,peak(x,best_valsfull[0],best_valsfull[1],best_valsfull[2]),label='gaussian fit',color='purple')
+plt.xlabel('Frequency ($\mu$Hz)')
+plt.ylabel('$Ppm^2$/$\mu$Hz')
+plt.title('Binned Frequency-Power spectrum for the Sun with and without Shot Noise')
+plt.legend()
+#Zoom in and attempt gaussian fit
+
+xbinlim = xbin[100:250]
+ybinlim = ybin[100:250]
+ybinlims = ybins[100:250]
+init_guess = [2, 3000, 1000]
+best_valscut, covar = curve_fit(peak, xbinlim, ybinlim, p0=init_guess)
+best_valscutshot, covar = curve_fit(peak, xbinlim, ybinlims, p0=init_guess)
+
+
+
+fig = plt.figure(figsize=(20,10))
+ax = fig.add_subplot(1,1,1)
+ax.plot(xbinlim, ybinlim, label='Binned Sun Spectrum with No Shot Noise')
+ax.plot(xbinlim, ybinlims, label='Binned Sun spectrum with Shot Noise at app mag = 8')
+ax.plot(xbinlim,peak(xbinlim,best_valscut[0],best_valscut[1],best_valscut[2]),label='gaussian fit of No Shot Noise',color='purple')
+ax.axvline(x=best_valscut[1], color='purple', linestyle='--', label='centre of gaussian fit with no shot noise')
+ax.plot(xbinlim,peak(xbinlim,best_valscutshot[0],best_valscutshot[1],best_valscutshot[2]),label='gaussian fit with Sht Noise',color='green')
+ax.axvline(x=best_valscutshot[1], color='green', linestyle='--', label='centre of gaussian fit with Shot noise')
+plt.xlabel('Frequency ($\mu$Hz)')
+plt.ylabel('$Ppm^2$/$\mu$Hz')
+plt.title('Binned Frequency-Power spectrum for the Sun with and without Shot Noise')
+plt.legend()
+
+#SHOT NOISE LEVEL TEST
+shotnoises = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10]
+differencesavg = []
+for n in shotnoises:
+    differences = []
+    for z in np.arange(500):
+        try:
+            vmag = np.full((6000), n) #here 8 defines the apparent magnitude
+            shot_noise = 18*10**(-0.4*(11.0-vmag))
+            ysums = y1+y2+y3+y4+granulation+shot_noise
+            ysumns = addnoise(ysums)
+            
+            ybin = bin_it(ysumn, binsize)
+            ybins = bin_it(ysumns, binsize)
+            ybinlim = ybin[100:250]
+            ybinlims = ybins[100:250]
+            init_guess = [2, 3000, 1000]
+            best_valscut, covar = curve_fit(peak, xbinlim, ybinlim, p0=init_guess)
+            best_valscutshot, covar = curve_fit(peak, xbinlim, ybinlims, p0=init_guess)
+            differences.append(best_valscut[1] - best_valscutshot[1])
+        except:
+            pass
+    differencesavg.append(np.mean(differences))
+    
+print(differencesavg)
+fig = plt.figure(figsize=(20,10))
+ax = fig.add_subplot(1,1,1)
+ax.plot(shotnoises,differencesavg)
+plt.xlabel('Shot Noise Levels/ Apparent Magnitude')
+plt.ylabel('Average Difference in $Ppm^2$/$\mu$Hz')
+plt.title('Average Difference in Centroids of Plots with and without Shot Noise')
