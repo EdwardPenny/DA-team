@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Created on Tue Feb 18 14:14:33 2020
 
@@ -197,6 +198,15 @@ def peak(x,height,centre,width):
     '''plots a gaussian'''
     return height*np.exp((-(x-centre)**2)/(2*width**2))
 
+def gausgaus(x, height, centre, width, heightgaus, centregaus, widthgaus):
+    base = heightgaus*np.exp((-(x-centregaus)**2)/(2*widthgaus**2))
+    return height*np.exp((-(x-centre)**2)/(2*width**2))+base
+
+def gausgran(x,height,centre,width):
+    '''plots a gaussian acounting for granulation'''
+    granulation = (4*np.sqrt(2)*tau_sun/1e6*(sigma_sun)**2)/(1+(2*np.pi*x*tau_sun/1e6)**4) #ppm squared per micro hertz
+    return height*np.exp((-(x-centre)**2)/(2*width**2))+granulation
+
 def bin_it(yvalues,binsize):
     '''groups an array in groups of a given size then averaging them'''
     N=int(math.ceil(len(yvalues)/binsize))
@@ -212,6 +222,24 @@ def bin_it(yvalues,binsize):
         newy.append(Q)
         C+=1
     return np.array(newy)
+
+
+def getdiff(yvals, xvals, binsize, init_guess, trueval):
+    ybin = bin_it(yvals, binsize)
+    xbin = x[0::binsize]
+    bf, covar = curve_fit(gausgran, xbin, ybin, p0=init_guess)
+    print(bf)
+    fig = plt.figure(figsize=(20,10))
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(xbin, gausgran(xbin, bf[0], bf[1], bf[2]))
+    return bf
+
+def passfail(differences):
+    var = np.var(differences)
+    if var > 100:
+        return False
+    else:
+        return True
 
 binsize = 20
 ybin = bin_it(ysumn, binsize)
@@ -260,9 +288,12 @@ plt.legend()
 #SHOT NOISE LEVEL TEST
 shotnoises = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10]
 differencesavg = []
+variance = []
+fails = []
 for n in shotnoises:
     differences = []
-    for z in np.arange(500):
+    failcount = 0
+    for z in np.arange(400):
         try:
             vmag = np.full((6000), n) #here 8 defines the apparent magnitude
             shot_noise = 18*10**(-0.4*(11.0-vmag))
@@ -278,13 +309,22 @@ for n in shotnoises:
             best_valscutshot, covar = curve_fit(peak, xbinlim, ybinlims, p0=init_guess)
             differences.append(best_valscut[1] - best_valscutshot[1])
         except:
+            failcount = failcount + 1
             pass
     differencesavg.append(np.mean(differences))
+    variance.append(np.var(differences))
+    fails.append(failcount)
     
 print(differencesavg)
 fig = plt.figure(figsize=(20,10))
 ax = fig.add_subplot(1,1,1)
 ax.plot(shotnoises,differencesavg)
-plt.xlabel('Shot Noise Levels/ Apparent Magnitude')
-plt.ylabel('Average Difference in $Ppm^2$/$\mu$Hz')
-plt.title('Average Difference in Centroids of Plots with and without Shot Noise')
+ax.plot(shotnoises, variance, c='g')
+ax.set_xlabel('Shot Noise Levels/ Apparent Magnitude')
+ax.set_ylabel('Average Difference in $Ppm^2$/$\mu$Hz')
+ax.set_title('Average Difference in Centroids of Plots with and without Shot Noise')
+
+ax2 = ax.twinx()
+ax2.plot(shotnoises, fails, c='r')
+ax2.set_ylabel('Fitting Failures')
+
