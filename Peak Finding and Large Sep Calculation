@@ -1,0 +1,172 @@
+import numpy as np
+import astropy.constants as c
+import math
+import scipy
+from scipy import stats
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import peakutils
+from peakutils.plot import plot as pyplot
+
+'''Uses the Gaussian as the height in the function to plot the Lorentzians'''
+def lorentz_gauss(modes, Gauss, width):
+    Lorentzh = np.zeros(len(x))
+    for p in range(len(modes)):
+        Lorentzh+=(Gauss*((1+((x - np.array(modes)[p])/(width/2))**2)**(-1)))
+    Lorentzh_array = np.array(Lorentzh)
+    return Lorentzh_array
+
+'''Adds random noise'''
+def addnoise(pure):
+    vary = np.random.uniform(0, 1, pure.shape)
+    signal = -(pure* np.log(vary))
+    return (signal)
+
+'''groups an array in groups of a given size then averaging them'''
+def bin_it(yvalues, binsize):
+    N=int(math.ceil(len(yvalues) / binsize))
+    #finds number of times code should loop, taking into acount the final group may be smaller than binsize
+    C=0
+    newy=[] #list for new y array
+    while C<N:
+        if (C+1)*binsize<len(yvalues): #if the end of the bin is still inside the orignal array
+            Q=(np.sum(yvalues[C*binsize:(C+1)*binsize]))/binsize #group of binsize averaged
+        else:
+            Q=(np.sum(yvalues[C*binsize:len(yvalues)]))/binsize
+            #if end of bin would be oustide the array use end of the array as the end of the bin
+        newy.append(Q)
+        C+=1
+    return np.array(newy)
+
+# DEFINING SOLAR PARAMETERS #
+delta_v_sun = 134.8 #microHz
+D = 1.5
+n = []
+for i in range(40):
+    n.append(i+1)
+
+l0= 0
+l1 = 1
+l2 = 2
+l3 = 3
+
+width = 10
+
+frequency = []
+for j in range(6000):
+    frequency.append(j+1)
+x = np.array(frequency)
+
+H=5
+epsilon=1.5
+V_max_sun = 3100 #microHz
+A_max_sun = 2.1 #ppm from Warrick's paper
+
+''' CALCULATES MODES FOR DIFFERENT ANGULAR DEGREE, l AND RADIAL MODE, n '''
+modes=[]
+for i in range(len(n)):
+    modes.append(delta_v_sun*(n[i]+((l0)/2)+epsilon)-D*(l0)*((l0)+1))
+modes1=[]
+for i in range(len(n)):
+    modes1.append(delta_v_sun*(n[i]+((l1)/2)+epsilon)-D*(l1)*((l1)+1))
+modes2=[]
+for i in range(len(n)):
+    modes2.append(delta_v_sun*(n[i]+((l2)/2)+epsilon)-D*(l2)*((l2)+1))
+modes3=[]
+for i in range(len(n)):
+    modes3.append(delta_v_sun*(n[i]+((l3)/2)+epsilon)-D*(l3)*((l3)+1))
+
+#Defines Gaussian curve with height A squared
+sigma = 2.123*delta_v_sun #microHz
+Gauss = (A_max_sun**2)*(np.exp(-0.5*((x-V_max_sun)/sigma)**2))
+
+#Defines parameters for granulation
+tau_sun = 200 #seconds
+g_sun = 274 #metres per second squared
+T_eff_sun = 5777 #Kelvin
+sigma_sun = 50000/(c.R_sun.value/(1000*10**3)) #ppm
+
+granulation = (4*np.sqrt(2)*tau_sun/1e6*(sigma_sun)**2)/(1+(2*np.pi*x*tau_sun/1e6)**4)
+#ppm squared per micro hertz
+
+#Defines width of the Lorentzians
+alpha = -25.5+29.1 #for the Sun
+gamma_alpha = 6.3 - 1.8 #for the Sun
+linewidth = (alpha*np.log(x/V_max_sun)+np.log(gamma_alpha))
+
+#Heights of modes scaled to their relative visibilities 
+L0 = Lorentzh_array_0 = lorentz_gauss(modes, Gauss, linewidth)
+L1 = Lorentzh_array_1 = lorentz_gauss(modes1, Gauss*1.5, linewidth)
+L2 = Lorentzh_array_2 = lorentz_gauss(modes2, Gauss*0.5, linewidth)
+L3 = Lorentzh_array_3 = lorentz_gauss(modes3, Gauss*0.04, linewidth)
+
+shot_noises = []
+mags = np.linspace(-2,17,19)
+print(mags)
+
+mags1 = [6]
+for n in mags:
+    vmag = np.full((6000), n) #here 8 defines the apparent magnitude
+    shot_noises.append(18*10**(-0.4*(11.0-vmag)))
+    shot_noise = np.array(shot_noises)
+
+#print(shot_noise)
+
+# PUTTING TOGETHER ALL COMPONENTS
+Osc = (L0 + L1 + L2 + L3)
+G = granulation
+
+TotalSpec = []
+for SNL in shot_noises:
+    Spectrum = Osc + G + (SNL)
+    TotalSpec.append(Spectrum)
+print(np.shape(TotalSpec))
+
+def largesep(x, yarray,min_dist,binsize=1,lowbound=0,highbound=len(x)):
+    binned_x = bin_it(x[lowbound:highbound],binsize)
+    binned_p = bin_it(yarray[lowbound:highbound],binsize)
+    indexes = peakutils.indexes(binned_p, thres=0.01, min_dist=min_dist)
+    freq_array = np.array(binned_x[indexes])
+    pyplot(binned_x, binned_p, indexes)
+    return freq_array
+    
+    
+binsize = 10
+lowbound = 2500
+highbound = 4000
+min_dist = 5
+
+C=0
+large_sep = []
+spacing = []
+n=0
+
+while C<len(TotalSpec)-1:
+    for i in TotalSpec:
+        Solar_Comp = addnoise(TotalSpec[C])
+        binned_x = bin_it(x[lowbound:highbound],binsize)
+        binned_p = bin_it(Solar_Comp[lowbound:highbound],binsize)
+        indexes = peakutils.indexes(binned_p, thres=0.01, min_dist=min_dist)
+        plt.figure(figsize = (15, 7))
+        plt.plot(binned_x, binned_p)
+        plt.title(f'Frequency-Power spectrum for the Sun with an apparent magnitude of {np.round(mags[C],decimals=2)}')
+        plt.xlabel('Frequency ($\mu$Hz)')
+        plt.ylabel('$Ppm^2$/$\mu$Hz')
+        plt.show()
+        freq_array = np.array(binned_x[indexes])
+        pyplot(binned_x, binned_p, indexes)
+        for i in freq_array:
+            nmax=len(freq_array)
+            while n<nmax-1:
+                spacing.append(abs(freq_array[n]-freq_array[n+1]))
+                n=n+1
+            spacing = (np.array(spacing))
+            
+        print(f'The mean large spacing for magnitude of {np.round(mags[C],decimals=2)} is {np.round(2*np.mean(spacing),decimals=2)}')
+        large_sep.append(2*np.mean(spacing))    
+        C=C+1
+        
+    print((large_sep))
+    
+
