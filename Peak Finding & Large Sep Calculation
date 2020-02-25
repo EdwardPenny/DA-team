@@ -1,0 +1,31 @@
+binsize = 10
+lowbound = 2500
+highbound = 4000
+min_dist = 5
+
+C=0
+while C<len(TotalSpec)-1:
+    for i in TotalSpec:
+        Solar_Comp = addnoise(TotalSpec[C])
+        binned_x = bin_it(x[lowbound:highbound],binsize)
+        binned_p = bin_it(Solar_Comp[lowbound:highbound],binsize)
+        indexes = peakutils.indexes(binned_p, thres=0.01, min_dist=min_dist)
+        plt.figure(figsize = (15, 7))
+        plt.plot(binned_x, binned_p)
+        plt.title(f'Frequency-Power spectrum for the Sun with an apparent magnitude of {np.round(mags[C],decimals=2)}')
+        plt.xlabel('Frequency ($\mu$Hz)')
+        plt.ylabel('$Ppm^2$/$\mu$Hz')
+        plt.show()
+        freq_array = np.array(binned_x[indexes])
+        pyplot(binned_x, binned_p, indexes)
+        n=0 
+        spacing = []
+        for i in freq_array:
+            nmax=len(freq_array)
+            while n<nmax-1:
+                spacing.append(abs(freq_array[n]-freq_array[n+1]))
+                n=n+1
+            spacing = (np.array(spacing))
+        print(f'The mean large spacing for magnitude of {np.round(mags[C],decimals=2)} is {np.round(2*np.mean(spacing),decimals=2)}')
+        C+=1
+    
