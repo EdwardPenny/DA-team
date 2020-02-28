@@ -1,0 +1,28 @@
+'''
+Some parts may have names which do not adhere to other codes - will be sorted soon
+'''
+
+
+
+
+def integrand1(x, a, b):
+    I = a/(1+(2*np.pi*x*b)**4)
+    return I
+a = best[0]
+b = best[1]
+Int1 = quad(integrand1, 0, 6000, args=(a,b))
+print(Int1)
+
+plt.figure()
+plt.plot(x, Gauss)
+
+
+def integrand2(x):
+    I = (A_max_sun**2)*(np.exp(-0.5*((x-V_max_sun)/sigma)**2))
+    return I
+
+Int2 = quad(integrand2, 0, 6000)
+print(Int2)
+
+ratio = Int1[0] / Int2[0]
+print(ratio)
