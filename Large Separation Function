@@ -1,0 +1,83 @@
+def largesep(rawdata, vmax=5000, width=2000):
+    '''
+    calculates the large separation between the most prominant l modes
+    rawdata: imported data 
+    vmax: calculated vmax of the Gaussian envelope
+    width: calculated width of the Gaussian envelope
+    -------------------------------
+    returns array of [int(P), mean_no_peaks, mean_no_peaks_std, mean_lspacing, mean_lspacing_std] 
+    int(P): Star Index
+    mean_no_peaks, mean_no_peaks_std: mean number of peaks identified and standard deviation on this
+    mean_lspacing, mean_lspacing_std: mean large spacing and the standard deviation on this
+    '''
+    p_centre = 5000
+    halfwidth = width/2  #to be replaced with the calculated width
+    D = 0
+    Dmax = 25
+    
+    xny=bin_it(addnoise(rawdata[int(P)]),frequency,binsize)
+    xdata = xny[1]
+    ydata = xny[0]
+    
+    
+    if vmax == 0 or vmax<3000: #indexing to centre peak finding around the Gaussian envelope
+        low = p_centre-halfwidth    #and if vmax<3000 it will default to vmax=p_centre=5000
+        high = p_centre+halfwidth
+        lowbound = np.where(xdata>3999)[0][0] #need to put in terms of vmax
+        highbound = np.argwhere(xdata>5999)[0][0]
+    else:
+        low = vmax-halfwidth   #if vmax is good, it will centre the peak finding function on that vmax
+        high = vmax+halfwidth
+        lowbound = np.argwhere(xdata>(low))[0][0]
+        highbound = np.argwhere(xdata>(high))[0][0]
+    
+    #generating low binned data
+    binned_p, binned_x = bin_it(ydata[lowbound:highbound], xdata[lowbound:highbound],binsize) 
+    best_thresh = []
+    no_peaks = []
+    
+    #finding the best no. peaks to match to by looping over different noisy data sets 
+    while D<Dmax:    #and finding the average number of peaks it detects
+        xny=bin_it(addnoise(rawdata[int(P)]),frequency,binsize)
+        binned_p, binned_x = bin_it(xny[0][lowbound:highbound], xny[1][lowbound:highbound],binsize)
+        nos_peaks = len(peakutils.indexes(binned_p, thres=0.375, min_dist=30))
+        no_peaks = np.append(no_peaks, [nos_peaks])
+        D=D+1
+    mean_no_peaks = np.mean(no_peaks)
+    mean_no_peaks_std = np.std(no_peaks)
+    print(f' The mean number of peaks is {np.round(mean_no_peaks,decimals=0)}±{np.round(mean_no_peaks_std,decimals=0)}') 
+    #if mean number of peaks is too low or too high, something is wrong, roughly between 10-20 from testing
+    
+    #finding the best threshold value
+    for i in np.linspace(0.25,0.5,70): 
+        xny=bin_it(addnoise(data[int(P)]),frequency,binsize)
+        binned_p, binned_x = bin_it(xny[0][lowbound:highbound], xny[1][lowbound:highbound],binsize)
+        indexess = peakutils.indexes(binned_p, thres=i, min_dist=30)
+        if len(indexess) == np.round((np.mean(no_peaks)),decimals=0): #selecting all thresholds that produce
+            best_thresh = np.append(best_thresh,i)       #the same number of peaks as the average number 'no_peaks'
+    print(f' The mean threshold is {np.round(np.mean(best_thresh),decimals=4)}±{np.round(np.std(best_thresh),decimals=4)}')
+    
+    indexes = peakutils.indexes(binned_p, thres=np.mean(best_thresh), min_dist=30) #finds peaks with best_thresh
+    freq_array = np.array(binned_x[indexes])
+    pyplot(binned_x, binned_p, indexes) #plots the peaks on a separate graph
+    plt.show()
+    
+    n=0
+    large_sep = []
+    spacing = []
+    
+    #calculating the large separation
+    for i in freq_array:
+        nmax=len(freq_array)
+        while n<nmax-1:
+            z = abs(freq_array[n]-freq_array[n+1])
+            if z<100:
+                spacing = np.append(spacing, [z])
+            n=n+1
+            spacing = (np.array(spacing))
+    mean_lspacing = 2*np.mean(spacing)
+    mean_lspacing_std = np.std(spacing)
+    print(f'The mean large spacing for Star {int(P)} is {np.round(mean_lspacing,decimals=2)}±{np.round(mean_lspacing_std,decimals=2)}')
+    print('')
+    return np.array([ int(P), mean_no_peaks, mean_no_peaks_std, mean_lspacing, mean_lspacing_std])
+
