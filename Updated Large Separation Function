@@ -191,13 +191,12 @@ def largesep(rawdata, vmax, width,Starnumber):
     
     indexes2 = indexes(binned_p, thres=thresh, min_dist=50) #finds peaks with best_thresh
     freq_array = np.array(binned_x[indexes2])
-    max_p = np.amax(binned_p[indexes2])*thresh
-    #print(max_p)
+    max_p = np.amax(binned_p[indexes2])*(1-thresh)
     plt.figure(figsize = (15, 7))
     pyplot(binned_x, binned_p, indexes2) #plots the peaks on a separate graph
     plt.xlabel('Frequency ($\mu$Hz)')
     plt.ylabel('$Ppm^2$/$\mu$Hz')
-    #plt.axhline(max_p,color='r')
+    plt.axhline(max_p,color='r') #adding line at cut-off based on the threshold
     plt.show()
     
     
