@@ -127,8 +127,9 @@ def pyplot(x, y, ind):
     vmax: calculated vmax of the Gaussian envelope
     width: calculated width of the Gaussian envelope
     -------------------------------
-    returns array of [int(P), mean_no_peaks, mean_no_peaks_std, mean_lspacing, mean_lspacing_std] 
-    int(P): Star Index
+    returns array of [int(Starnumber), vmax, mean_no_peaks, mean_no_peaks_std, mean_lspacing, mean_lspacing_std] 
+    int(Starnumber): Star Number
+    vmax : Calculated maximum frequency
     mean_no_peaks, mean_no_peaks_std: mean number of peaks identified and standard deviation on this
     mean_lspacing, mean_lspacing_std: mean large spacing and the standard deviation on this
     '''
@@ -180,8 +181,8 @@ def pyplot(x, y, ind):
     
     thresh = np.mean(best_thresh)
     
-    if thresh < 0.36: #if thresh too low, setting min thresh to 0.36 so not too many peaks are chosen
-        thresh = 0.36
+    if thresh < 0.355: #if thresh too low, setting min thresh to 0.36 so not too many peaks are chosen
+        thresh = 0.355
     else:
         thresh = np.mean(best_thresh)
         
@@ -209,6 +210,6 @@ def pyplot(x, y, ind):
     mean_lspacing_std = np.std(spacing)
     print(f'The mean large spacing for Star {Starnumber} is {np.round(mean_lspacing,decimals=2)} ± {np.round(mean_lspacing_std,decimals=2)}')
     print('')
-    return np.array([ int(Starnumber), mean_no_peaks, mean_no_peaks_std, mean_lspacing, mean_lspacing_std])
+    return np.array([ int(Starnumber), vmax, mean_no_peaks, mean_no_peaks_std, mean_lspacing, mean_lspacing_std])
     
     
