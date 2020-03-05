@@ -21,7 +21,7 @@ def pyplot(x, y, ind):
     
     
     
-    def indexes(y, thres=0.3, min_dist=1, thres_abs=False):
+def indexes(y, thres=0.3, min_dist=1, thres_abs=False):
     """Peak detection routine.
 
     Finds the numeric index of the peaks in *y* by taking its first order difference. By using
@@ -117,19 +117,20 @@ def pyplot(x, y, ind):
     
     
     
-    def largesep(rawdata, vmax, width,Starnumber):
-    print(f'Star {Starnumber}')
+def largesep(rawdata, vmax, width,Starnumber):
+    print(f'For Star {Starnumber} with vmax={vmax}')
     frequency=data[0]
     binsize=10
     '''
     calculates the large separation between the most prominant l modes
+    
     rawdata: imported data 
-    vmax: calculated vmax of the Gaussian envelope
+    vmax: calculated maximum frequency of the Gaussian envelope
     width: calculated width of the Gaussian envelope
     -------------------------------
     returns array of [int(Starnumber), vmax, mean_no_peaks, mean_no_peaks_std, mean_lspacing, mean_lspacing_std] 
     int(Starnumber): Star Number
-    vmax : Calculated maximum frequency
+    vmax = calculated maximum frequency #for ease of plotting the resukts later
     mean_no_peaks, mean_no_peaks_std: mean number of peaks identified and standard deviation on this
     mean_lspacing, mean_lspacing_std: mean large spacing and the standard deviation on this
     '''
