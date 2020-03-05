@@ -164,7 +164,7 @@ def largesep(rawdata, vmax, width,Starnumber):
     while D<Dmax:    #and finding the average number of peaks it detects
         xny=bin_it(addnoise(rawdata),frequency,binsize)
         binned_p, binned_x = bin_it(xny[0][lowbound:highbound], xny[1][lowbound:highbound],binsize)
-        nos_peaks = len(indexes(binned_p, thres=0.375, min_dist=50))
+        nos_peaks = len(indexes(binned_p, thres=0.375, min_dist=40))
         no_peaks = np.append(no_peaks, [nos_peaks])
         D=D+1
     mean_no_peaks = np.mean(no_peaks)
@@ -176,7 +176,7 @@ def largesep(rawdata, vmax, width,Starnumber):
     for i in np.linspace(0.25,0.5,70): 
         xny=bin_it(addnoise(rawdata),frequency,binsize)
         binned_p, binned_x = bin_it(xny[0][lowbound:highbound], xny[1][lowbound:highbound],binsize)
-        indexess = indexes(binned_p, thres=i, min_dist=50)
+        indexess = indexes(binned_p, thres=i, min_dist=40)
         if len(indexess) == np.round((np.mean(no_peaks)),decimals=0): #selecting all thresholds that produce
             best_thresh = np.append(best_thresh,i)       #the same number of peaks as the average number 'no_peaks'
     
@@ -189,7 +189,7 @@ def largesep(rawdata, vmax, width,Starnumber):
         
     print(f' The mean threshold is {np.round(thresh,decimals=3)} ± {np.round(np.std(best_thresh),decimals=3)}')
     
-    indexes2 = indexes(binned_p, thres=thresh, min_dist=50) #finds peaks with best_thresh
+    indexes2 = indexes(binned_p, thres=thresh, min_dist=40) #finds peaks with best_thresh
     freq_array = np.array(binned_x[indexes2])
     max_p = np.amax(binned_p[indexes2])*(1-thresh)
     plt.figure(figsize = (15, 7))
