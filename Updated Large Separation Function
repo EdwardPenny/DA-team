@@ -163,7 +163,7 @@ def pyplot(x, y, ind):
     while D<Dmax:    #and finding the average number of peaks it detects
         xny=bin_it(addnoise(rawdata),frequency,binsize)
         binned_p, binned_x = bin_it(xny[0][lowbound:highbound], xny[1][lowbound:highbound],binsize)
-        nos_peaks = len(indexes(binned_p, thres=0.375, min_dist=30))
+        nos_peaks = len(indexes(binned_p, thres=0.375, min_dist=50))
         no_peaks = np.append(no_peaks, [nos_peaks])
         D=D+1
     mean_no_peaks = np.mean(no_peaks)
@@ -175,23 +175,30 @@ def pyplot(x, y, ind):
     for i in np.linspace(0.25,0.5,70): 
         xny=bin_it(addnoise(rawdata),frequency,binsize)
         binned_p, binned_x = bin_it(xny[0][lowbound:highbound], xny[1][lowbound:highbound],binsize)
-        indexess = indexes(binned_p, thres=i, min_dist=30)
+        indexess = indexes(binned_p, thres=i, min_dist=50)
         if len(indexess) == np.round((np.mean(no_peaks)),decimals=0): #selecting all thresholds that produce
             best_thresh = np.append(best_thresh,i)       #the same number of peaks as the average number 'no_peaks'
     
     thresh = np.mean(best_thresh)
     
-    if thresh < 0.355: #if thresh too low, setting min thresh to 0.36 so not too many peaks are chosen
+    if thresh < 0.355: #if thresh too low, setting min thresh to 0.355 so not too many peaks are chosen
         thresh = 0.355
     else:
         thresh = np.mean(best_thresh)
         
     print(f' The mean threshold is {np.round(thresh,decimals=3)} ± {np.round(np.std(best_thresh),decimals=3)}')
     
-    indexes2 = indexes(binned_p, thres=thresh, min_dist=30) #finds peaks with best_thresh
+    indexes2 = indexes(binned_p, thres=thresh, min_dist=50) #finds peaks with best_thresh
     freq_array = np.array(binned_x[indexes2])
+    max_p = np.amax(binned_p[indexes2])*thresh
+    #print(max_p)
+    plt.figure(figsize = (15, 7))
     pyplot(binned_x, binned_p, indexes2) #plots the peaks on a separate graph
+    plt.xlabel('Frequency ($\mu$Hz)')
+    plt.ylabel('$Ppm^2$/$\mu$Hz')
+    #plt.axhline(max_p,color='r')
     plt.show()
+    
     
     n=0
     large_sep = []
