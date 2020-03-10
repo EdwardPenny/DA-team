@@ -137,7 +137,7 @@ def largesep(rawdata, vmax, width,Starnumber):
     p_centre = 5000
     halfwidth = width/2  #to be replaced with the calculated width
     D = 0
-    Dmax = 25
+    Dmax = 100
     
     xny=bin_it(addnoise(rawdata),frequency,binsize)
     xdata = xny[1]
@@ -173,7 +173,7 @@ def largesep(rawdata, vmax, width,Starnumber):
     #if mean number of peaks is too low or too high, something is wrong, roughly between 10-20 from testing
     
     #finding the best threshold value
-    for i in np.linspace(0.25,0.5,70): 
+    for i in np.linspace(0.25,0.5,100): 
         xny=bin_it(addnoise(rawdata),frequency,binsize)
         binned_p, binned_x = bin_it(xny[0][lowbound:highbound], xny[1][lowbound:highbound],binsize)
         indexess = indexes(binned_p, thres=i, min_dist=40)
