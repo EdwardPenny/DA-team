@@ -191,14 +191,7 @@ def largesep(rawdata, vmax, width,Starnumber):
     
     indexes2 = indexes(binned_p, thres=thresh, min_dist=40) #finds peaks with best_thresh
     freq_array = np.array(binned_x[indexes2])
-    max_p = np.amax(binned_p[indexes2])*(1-thresh)
-    plt.figure(figsize = (15, 7))
-    pyplot(binned_x, binned_p, indexes2) #plots the peaks on a separate graph
-    plt.xlabel('Frequency ($\mu$Hz)')
-    plt.ylabel('$Ppm^2$/$\mu$Hz')
-    plt.axhline(max_p,color='r') #adding line at cut-off based on the threshold
-    plt.show()
-    
+    max_p1 = np.amax(binned_p[indexes2])*(1-thresh)
     
     n=0
     large_sep = []
@@ -217,6 +210,19 @@ def largesep(rawdata, vmax, width,Starnumber):
     mean_lspacing_std = np.std(spacing)
     print(f'The mean large spacing for Star {Starnumber} is {np.round(mean_lspacing,decimals=2)} ± {np.round(mean_lspacing_std,decimals=2)}')
     print('')
+     
+    
+    plt.figure(figsize = (15, 10))
+    pyplot(binned_x, binned_p, indexes2) #plots the peaks on a separate graph
+    plt.xlabel('Frequency ($\mu$Hz)',fontsize = 18)
+    plt.ylabel('$Ppm^2$/$\mu$Hz',fontsize = 18) 
+    plt.axhline(max_p1,color='r')
+    plt.axvline(vmax, color='g')
+    plt.tick_params(axis='both', which='major', labelsize=18) 
+    plt.legend(fontsize = 16) 
+    plt.tight_layout()
+    plt.show()
+    
     return np.array([ int(Starnumber), vmax, mean_no_peaks, mean_no_peaks_std, mean_lspacing, mean_lspacing_std])
     
     
